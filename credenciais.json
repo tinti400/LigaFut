@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "ligafut-a0056",
+  "private_key_id": "0eda66299c7fbc69257bb5f4fe006b7e39b42727",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCg+Lkn4PyETL9n\ncJCDAVMxQPyshOQZBW2UOTFL+V/cvDx53rvygB5wpZajUwR6ZJUZlhIjKQZYSBuB\nYClhm8QRHEJy3sYMqRG5+hMM3wy88cpsRS4wItS0dW8HiUb06Wamob8OgfrNJHjE\nuYb7F/n2Esl9rp2zU2UVHW7ADz1GXdjqRAqqtQBIQFGjufAJdqMnNqOiR4d+YzAU\nOXonnPjTZmE47/fnBsQ+yeQAQVKcBGXE3p3NjhSrpyPBogWLggnG4e+Zz7Rnn2mR\nA7YL+RgQjd3KanhrBCp7U1ShfwI3wM5EKPFdufxTMRicKutedJ7j02hyLRUdVJrE\nXTBInKLHAgMBAAECggEAH+GjKlbRLJLWxfHxbUDx7Stl3/ViB+KfVWAOd3GonttZ\nTvniV6EwZjcloqtqk6MgNLUYWoZhj1KYwAL/rylep9TlBENDDnbd3+u7oiz7JODu\nqor5HueHIUaw+tkhiJhBkHcwk/sCZWb31F66cTjKdQY7ifzvlvjJaGkv6jIafLkB\nJFIFUNUWmrzPnrKmCvCZu+s5ZgWR9Nv3UWT8bcWrWaTAD7v088T6K8lovsTXQ7d+\nU+w6FUOQMqJD10Kwgy4Z9+aiUwad7dLIgZRUcSvcQZTSmXRZrsEx4X0GHSTfhWT7\n+JEKZ+pMGn7UgHreSJovjwl6JxjvntMCygtbPJaFoQKBgQDUCoaMGok8Q37t6Zlz\nEJtBIc43uPZmFy4928mSYrc1ib73CX+eH3HojR4U4VHh/m7w1O7fkb7jn5pjrdsx\nY58y0DJ2u0qkcZ9+L1iPF8gpNna+gdlJZmo69pzHfsiFC2mjd68vUYleyZdd38uB\nJnscDgteLPA6ZlXEWKmOhW7yiwKBgQDCV9QGW0RP0O+SrTkWYgt+LMFiV0+Nl9gq\n1kqN27wB8L4F07BRQ8vOgRUySGaGTKqjViDaNdwuAYI/nP8VC7/eVv+9J96Vl8pO\nijOsA0DXPDV91BEA4na85YiQ4Sy7nB5WygKTFr9T/u6OfedeKKkeTelO+QwgEHwB\nUP6NfRbENQKBgAI2iej0bfI/EhgRlBRrW/N2EtzqBUhTfZwPqy7n8NmSMngJlVdl\nJJ80udel8mDVcvr4ffW/Y6qkg8v+iIcfbw3stloe4kyNEwkSHW6A5QnpE5wxZr8p\nXnp3EHPUkuswj02xdhacVz6yA+5q44jZifdk/iFhfrBdWQ/PjRV7twi5AoGAIyzu\nbXAbfy7cDfpYeNqqJd5H6lrPRVuUfrxmpiJ9dwRyAG/+W9cfjnMCuSUtmWVLBWFT\ndOuGvLT9NDJgYRjNU5r/kucifIUK0whkrd+w3sRBElNN+JEE2M/a1g5LoHFzdFX/\n/UuCudtMpnHXbM2DPr7vWaHuNeeF6l8Uk9tuQXkCgYAH4ALyMWKEF++ajcaFUUF1\ndkbh5ISJ0SoPFDkWmgjLr4apzPZJLTM8QngJyCSfUs1FtaqnInEprlOUdhO5PiR1\nWRiRFW5kV1VXbnQd7/YlxD6fMQ/Nb1WbC/xiedHMj81G8Kb1ncLFl+IpQRPJFSZk\nrwksqKhJc5Pz2m1GIDLOlA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@ligafut-a0056.iam.gserviceaccount.com",
+  "client_id": "109574403666451846638",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40ligafut-a0056.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

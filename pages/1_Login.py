@@ -22,18 +22,23 @@ with st.form("login_form"):
 
 if botao_login:
     if usuario and senha:
-        usuarios_ref = db.collection("usuarios").where("usuario", "==", usuario).where("senha", "==", senha).stream()
-        usuario_encontrado = None
-        for doc in usuarios_ref:
-            usuario_encontrado = doc
-            break
+        try:
+            # ⚠️ Use o formato novo com keyword arguments
+            usuarios_ref = db.collection("usuarios").where(filter=("usuario", "==", usuario)).where(filter=("senha", "==", senha)).stream()
 
-        if usuario_encontrado:
-            st.success("✅ Login realizado com sucesso!")
-            st.session_state["usuario"] = usuario
-            st.session_state["id_usuario"] = usuario_encontrado.id
-            st.switch_page("pages/4_Elenco.py")
-        else:
-            st.error("❌ Usuário ou senha incorretos. Verifique os dados e tente novamente.")
+            usuario_encontrado = None
+            for doc in usuarios_ref:
+                usuario_encontrado = doc
+                break
+
+            if usuario_encontrado:
+                st.success("✅ Login realizado com sucesso!")
+                st.session_state["usuario"] = usuario
+                st.session_state["id_usuario"] = usuario_encontrado.id
+                st.switch_page("pages/4_Elenco.py")
+            else:
+                st.error("❌ Usuário ou senha incorretos. Verifique os dados e tente novamente.")
+        except Exception as e:
+            st.error(f"Erro ao tentar conectar com o Firebase: {e}")
     else:
         st.warning("Preencha todos os campos.")

@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import firebase_admin
 from firebase_admin import credentials, firestore
-from utils import verificar_login, verificar_leilao_ativo
 
+# Configuração da página
 st.set_page_config(page_title="Classificação", layout="wide")
 
 # Inicializar Firebase
@@ -14,11 +14,9 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 # Verificação de login
-verificar_login()
-
-# Verificação de Leilão Ativo
-if verificar_leilao_ativo():
-    st.warning("⚠️ Atenção: Leilão Ativo!")
+if "id_time" not in st.session_state:
+    st.warning("Você precisa estar logado para acessar esta página.")
+    st.stop()
 
 st.title("🏆 Painel de Classificação e Resultados")
 
@@ -48,19 +46,22 @@ def salvar_resultado(id_liga, numero_rodada, index, gols_mandante, gols_visitant
         jogos[index]["gols_mandante"] = gols_mandante
         jogos[index]["gols_visitante"] = gols_visitante
         ref.update({"jogos": jogos})
-        st.success("Resultado salvo com sucesso!")
+        st.success("✅ Resultado salvo com sucesso!")
 
 # Calcular Classificação
 def calcular_classificacao(times, id_liga, rodada_maxima):
     tabela = {id_time: {"Time": nome, "P": 0, "J": 0, "V": 0, "E": 0, "D": 0, "GP": 0, "GC": 0, "SG": 0} for id_time, nome in times.items()}
 
-    for numero_rodada in range(1, rodada_maxima + 1):
-        jogos = buscar_jogos(id_liga, numero_rodada)
+    for numero in range(1, rodada_maxima + 1):
+        jogos = buscar_jogos(id_liga, numero)
         for jogo in jogos:
+            if "gols_mandante" not in jogo or "gols_visitante" not in jogo:
+                continue
+
             mandante = jogo["mandante"]
             visitante = jogo["visitante"]
-            gm = jogo.get("gols_mandante", 0)
-            gv = jogo.get("gols_visitante", 0)
+            gm = jogo["gols_mandante"]
+            gv = jogo["gols_visitante"]
 
             if mandante not in tabela or visitante not in tabela:
                 continue
@@ -91,27 +92,47 @@ def calcular_classificacao(times, id_liga, rodada_maxima):
 
     return sorted(tabela.values(), key=lambda x: (-x["P"], -x["SG"], -x["GP"]))
 
+# Exibir jogos da rodada
 times = buscar_times()
 jogos = buscar_jogos(id_liga, numero_rodada)
 
 if jogos:
     st.subheader(f"📋 Rodada {numero_rodada} - Resultados")
+
     for i, jogo in enumerate(jogos):
-        col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 1, 2])
+        col1, col2, col3, col4 = st.columns([4, 1, 1, 2])
         with col1:
-            st.text(f"{times.get(jogo['mandante'], 'Desconhecido')} x {times.get(jogo['visitante'], 'Desconhecido')}")
+            mandante = times.get(jogo["mandante"], "Desconhecido")
+            visitante = times.get(jogo["visitante"], "Desconhecido")
+            st.text(f"{mandante} x {visitante}")
         with col2:
-            gols_mandante = st.number_input(f"Gols Mandante {i}", value=jogo.get("gols_mandante", 0), key=f"gm_{i}")
+            gm = st.number_input(f"Gols {mandante}", min_value=0, value=jogo.get("gols_mandante", 0), key=f"gm_{i}")
         with col3:
-            gols_visitante = st.number_input(f"Gols Visitante {i}", value=jogo.get("gols_visitante", 0), key=f"gv_{i}")
+            gv = st.number_input(f"Gols {visitante}", min_value=0, value=jogo.get("gols_visitante", 0), key=f"gv_{i}")
         with col4:
             if st.button("Salvar", key=f"salvar_{i}"):
-                salvar_resultado(id_liga, numero_rodada, i, gols_mandante, gols_visitante)
+                salvar_resultado(id_liga, numero_rodada, i, gm, gv)
 
-    if st.button("Atualizar Classificação"):
-        classificacao = calcular_classificacao(times, id_liga, numero_rodada)
-        df_classificacao = pd.DataFrame(classificacao, columns=["Time", "P", "J", "V", "E", "D", "GP", "GC", "SG"])
-        st.subheader("🏆 Classificação Atualizada")
-        st.dataframe(df_classificacao, use_container_width=True)
+    # Classificação
+    st.markdown("---")
+    st.subheader("🏆 Classificação Atualizada")
+
+    classificacao = calcular_classificacao(times, id_liga, numero_rodada)
+    df = pd.DataFrame(classificacao)
+    df.index = range(1, len(df) + 1)
+    df.reset_index(inplace=True)
+    df.rename(columns={"index": "Posição"}, inplace=True)
+
+    def highlight(row):
+        idx = row["Posição"]
+        if idx == 1:
+            return ["background-color: #d4edda"] * len(row)
+        elif idx <= 4:
+            return ["background-color: #c3e6cb"] * len(row)
+        elif idx > len(df) - 2:
+            return ["background-color: #f8d7da"] * len(row)
+        return [""] * len(row)
+
+    st.dataframe(df.style.apply(highlight, axis=1), use_container_width=True)
 else:
-    st.warning("Nenhum jogo encontrado para essa rodada.")
+    st.warning("⚠️ Nenhum jogo encontrado para essa rodada.")

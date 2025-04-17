@@ -1,11 +1,13 @@
+# 8_Financas.py
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-from utils import verificar_login, verificar_leilao_ativo
+from datetime import datetime
+from utils import verificar_login
 
-st.set_page_config(page_title="Finanças do Clube", layout="wide")
+st.set_page_config(page_title="Financeiro", layout="wide")
 
-# Inicializar Firebase
+# Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("credenciais.json")
     firebase_admin.initialize_app(cred)
@@ -14,27 +16,46 @@ db = firestore.client()
 
 verificar_login()
 
-st.title("💰 Finanças do Clube")
-
-# Verifica se há leilão ativo
-if verificar_leilao_ativo():
-    st.warning("⚠️ Atenção: Leilão Ativo!")
-
-# Recupera informações do usuário logado
-id_usuario = st.session_state.usuario_id
 id_time = st.session_state.id_time
 nome_time = st.session_state.nome_time
 
-st.markdown(f"### Time: {nome_time}")
+st.title("💰 Painel Financeiro")
+st.markdown(f"### 📊 Time: **{nome_time}**")
 
-time_ref = db.collection("times").document(id_time)
-time_doc = time_ref.get()
+movimentacoes_ref = db.collection("movimentacoes").where("id_time", "==", id_time).order_by("data", direction=firestore.Query.DESCENDING)
+movimentacoes = [doc.to_dict() for doc in movimentacoes_ref.stream()]
 
-if time_doc.exists:
-    dados_time = time_doc.to_dict()
-    saldo = dados_time.get("saldo", 0)
-
-    st.metric("Saldo Disponível", f"R$ {saldo:,.2f}")
+if not movimentacoes:
+    st.info("Nenhuma movimentação encontrada.")
 else:
-    st.error("Informações do time não encontradas.")
+    st.markdown("""
+        <style>
+            .tabela-financas {
+                background-color: #f0f2f6;
+                border-radius: 10px;
+                padding: 10px;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                margin-bottom: 10px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
+    for mov in movimentacoes:
+        tipo = mov.get("tipo", "-")
+        jogador = mov.get("jogador", "-")
+        valor = mov.get("valor", 0)
+        data = mov.get("data")
+        if isinstance(data, datetime):
+            data_str = data.strftime("%d/%m/%Y %H:%M")
+        else:
+            data_str = "-"
+
+        col1, col2, col3, col4 = st.columns([3, 3, 2, 2])
+        with col1:
+            st.markdown(f"<div class='tabela-financas'><b>Tipo:</b> {tipo.replace('_', ' ').title()}</div>", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"<div class='tabela-financas'><b>Jogador:</b> {jogador}</div>", unsafe_allow_html=True)
+        with col3:
+            st.markdown(f"<div class='tabela-financas'><b>Valor:</b> R$ {valor:,.0f}</div>", unsafe_allow_html=True)
+        with col4:
+            st.markdown(f"<div class='tabela-financas'><b>Data:</b> {data_str}</div>", unsafe_allow_html=True)

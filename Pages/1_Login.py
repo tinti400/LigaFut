@@ -1,59 +1,45 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-from utils import verificar_login
+from utils import autenticar_usuario
+from streamlit_extras.switch_page_button import switch_page
 
-st.set_page_config(page_title="Login", layout="centered")
+st.set_page_config(page_title="Login - LigaFut", layout="centered")
 
+# 🔐 Inicializa Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("credenciais.json")
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
-st.title("🔐 Login")
+# 🎯 Layout centralizado com estilo
+st.markdown("<div style='padding-top: 100px;'></div>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; color: white;'>Bem-vindo à LigaFut</h2>", unsafe_allow_html=True)
 
-usuario = st.text_input("Usuário").strip().lower()
-senha = st.text_input("Senha", type="password")
+# 🔐 Bloco do formulário
+with st.container():
+    st.markdown(
+        """
+        <div style='max-width: 400px; margin: 0 auto; background-color: rgba(0, 0, 0, 0.6); 
+                    padding: 30px; border-radius: 15px; color: white;'>
+        """,
+        unsafe_allow_html=True
+    )
 
-if st.button("Entrar"):
-    if usuario == "" or senha == "":
-        st.warning("Preencha todos os campos!")
-    else:
-        usuarios_ref = db.collection("usuarios")
-        docs = usuarios_ref.where("usuario", "==", usuario).where("senha", "==", senha).stream()
+    email = st.text_input("E-mail")
+    senha = st.text_input("Senha", type="password")
 
-        user_encontrado = None
-
-        for doc in docs:
-            user_encontrado = doc
-
-        if user_encontrado:
-            dados_usuario = user_encontrado.to_dict()
-            st.session_state.usuario = usuario
-            st.session_state.usuario_id = user_encontrado.id
-
-            # Verifica se o usuário tem um time vinculado
-            id_time = dados_usuario.get("id_time")
-
-            if id_time:
-                time_ref = db.collection("times").document(id_time)
-                time_doc = time_ref.get()
-
-                if time_doc.exists:
-                    dados_time = time_doc.to_dict()
-                    st.session_state.id_time = id_time
-                    st.session_state.nome_time = dados_time.get("nome")
-
-                    st.success("Login realizado com sucesso! ✅")
-
-                    st.page_link("Pages/7_Painel_Usuario.py", label="Ir para o Painel do Usuário", icon="🏠")
-                    st.page_link("Pages/5_Mercado_Transferencias.py", label="Ir para o Mercado", icon="💰")
-                else:
-                    st.error("Seu time não foi encontrado. Solicite ao administrador.")
-            else:
-                st.error("Seu time não foi encontrado. Solicite ao administrador.")
+    if st.button("Entrar"):
+        sucesso, user_data = autenticar_usuario(email, senha, db)
+        if sucesso:
+            st.session_state.usuario_id = user_data.get("id", "")
+            st.session_state.usuario = user_data.get("usuario", "")  # necessário para tela Home
+            st.session_state.nome_time = user_data.get("nome_time", "")
+            st.session_state.id_time = user_data.get("id_time", "")
+            st.success("Login realizado com sucesso!")
+            switch_page("Elenco")
         else:
-            st.error("Usuário ou senha incorretos.")
+            st.error("E-mail ou senha incorretos.")
 
-
+    st.markdown("</div>", unsafe_allow_html=True)

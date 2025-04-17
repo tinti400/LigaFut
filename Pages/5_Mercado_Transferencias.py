@@ -1,90 +1,86 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-from utils import verificar_login, verificar_leilao_ativo
+from utils import verificar_login, registrar_movimentacao
 
 st.set_page_config(page_title="Mercado de Transferências", layout="wide")
 
-# Inicializar Firebase
+# Inicializa Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("credenciais.json")
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
 
+# Verifica login
 verificar_login()
 
-st.title("💰 Mercado de Transferências")
-
-# Verifica se há leilão ativo
-if verificar_leilao_ativo():
-    st.warning("⚠️ Atenção: Leilão Ativo!")
-
+# Info do time logado
 id_time = st.session_state.id_time
 nome_time = st.session_state.nome_time
 
-st.markdown(f"### Time: {nome_time}")
+st.title("💰 Mercado de Transferências")
+st.markdown(f"### Time: `{nome_time}`")
 
-# Verificar se o mercado está aberto
-mercado_ref = db.collection("configuracoes").document("mercado")
-mercado_doc = mercado_ref.get()
-mercado_aberto = False
-if mercado_doc.exists:
-    dados = mercado_doc.to_dict()
-    mercado_aberto = dados.get("aberto", False)
+# Buscar jogadores no mercado
+mercado_ref = db.collection("mercado_transferencias").stream()
+mercado = [doc.to_dict() | {"id_doc": doc.id} for doc in mercado_ref]
 
-if not mercado_aberto:
-    st.warning("O Mercado de Transferências está fechado no momento.")
-    st.stop()
+# Organizar por posição
+ordem_posicoes = {
+    "GL": 0, "LD": 1, "ZAG": 2, "LE": 3, "VOL": 4, "MC": 5,
+    "MD": 6, "ME": 7, "PD": 8, "PE": 9, "SA": 10, "CA": 11
+}
+mercado.sort(key=lambda x: ordem_posicoes.get(x.get("posicao", ""), 99))
 
-# Filtros
-filtro_nome = st.text_input("Buscar por Nome")
-filtro_posicao = st.text_input("Buscar por Posição")
-filtro_overall = st.slider("Filtrar Overall", 65, 99, (65, 99))
+if not mercado:
+    st.warning("⚠️ Nenhum jogador disponível no mercado.")
+else:
+    st.markdown("### 📋 Jogadores Disponíveis")
+    for jogador in mercado:
+        col1, col2, col3, col4, col5 = st.columns([1, 3, 1, 2, 2])
+        with col1:
+            st.markdown(f"**{jogador.get('posicao', '')}**")
+        with col2:
+            st.write(jogador.get("nome", ""))
+        with col3:
+            st.write(jogador.get("overall", ""))
+        with col4:
+            st.write(f"R$ {jogador.get('valor', 0):,.0f}")
+        with col5:
+            if st.button("Comprar", key=f"comprar_{jogador['id_doc']}"):
+                # Verificar saldo
+                time_ref = db.collection("times").document(id_time)
+                saldo = time_ref.get().to_dict().get("saldo", 0)
+                valor = jogador.get("valor", 0)
 
-# Buscar jogadores do mercado
-mercado = db.collection("mercado_transferencias").stream()
-
-jogadores = []
-for doc in mercado:
-    jogador = doc.to_dict()
-    jogador["id"] = doc.id
-    jogadores.append(jogador)
-
-# Aplicar Filtros
-if filtro_nome:
-    jogadores = [j for j in jogadores if filtro_nome.lower() in j["nome"].lower()]
-if filtro_posicao:
-    jogadores = [j for j in jogadores if filtro_posicao.lower() in j["posicao"].lower()]
-jogadores = [j for j in jogadores if filtro_overall[0] <= j["overall"] <= filtro_overall[1]]
-
-for jogador in jogadores:
-    with st.expander(f"{jogador['nome']} - {jogador['posicao']} - Overall {jogador['overall']} - Valor R$ {jogador['valor']:,}"):
-        if st.button(f"Comprar {jogador['nome']}", key=jogador['id']):
-            # Buscar saldo do time
-            time_ref = db.collection("times").document(id_time)
-            time_doc = time_ref.get()
-            if time_doc.exists:
-                dados_time = time_doc.to_dict()
-                saldo_atual = dados_time.get("saldo", 0)
-                if saldo_atual >= jogador["valor"]:
-                    novo_saldo = saldo_atual - jogador["valor"]
-                    time_ref.update({"saldo": novo_saldo})
+                if saldo < valor:
+                    st.error("❌ Saldo insuficiente para realizar a compra.")
+                else:
+                    # Atualiza saldo
+                    time_ref.update({"saldo": saldo - valor})
 
                     # Adiciona jogador ao elenco
-                    elenco_ref = time_ref.collection("elenco")
-                    elenco_ref.add(jogador)
+                    jogador_elenco = {
+                        "nome": jogador.get("nome"),
+                        "posicao": jogador.get("posicao"),
+                        "overall": jogador.get("overall"),
+                        "valor": valor
+                    }
+                    db.collection("times").document(id_time).collection("elenco").add(jogador_elenco)
 
-                    # Remove jogador do mercado
-                    db.collection("mercado_transferencias").document(jogador["id"]).delete()
+                    # Remove do mercado
+                    db.collection("mercado_transferencias").document(jogador["id_doc"]).delete()
 
-                    st.success(f"{jogador['nome']} comprado com sucesso!")
-                    st.experimental_rerun()
-                else:
-                    st.error("Saldo insuficiente para realizar a compra.")
+                    # Registrar movimentação
+                    registrar_movimentacao(
+                        db=db,
+                        id_time=id_time,
+                        jogador=jogador["nome"],
+                        categoria="Compra",
+                        tipo="Saída",
+                        valor=valor
+                    )
 
-        if st.button(f"Excluir {jogador['nome']} do Mercado", key=f"excluir_{jogador['id']}"):
-            db.collection("mercado_transferencias").document(jogador["id"]).delete()
-            st.success(f"{jogador['nome']} removido do mercado!")
-            st.experimental_rerun()
-
+                    st.success(f"✅ {jogador['nome']} comprado com sucesso!")
+                    st.rerun()

@@ -12,8 +12,8 @@ db = firestore.client()
 email_usuario = "brunotinti400@gmail.com"
 
 # Novo time que deseja vincular
-novo_id_time = "ID_DO_TIME"  # Exemplo: "6lLrThoafAocWJosvLh0"
-novo_nome_time = "Flamengo"  # Nome do time
+novo_id_time = "COLE_AQUI_O_ID_DO_TIME"  # Exemplo: "648H5LX98Rkd0Dem"
+novo_nome_time = "Palmeiras"  # Nome do time
 
 # Caminho da coleção de usuários
 usuarios_ref = db.collection("usuarios").where("email", "==", email_usuario).stream()
@@ -26,5 +26,4 @@ for usuario in usuarios_ref:
     })
     print(f"Usuário {email_usuario} atualizado com sucesso!")
 
-print("Processo finalizado!")
-
+print("✅ Processo finalizado!")

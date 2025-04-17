@@ -1,9 +1,8 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-import os
 
-# Inicializa o Firebase se ainda não estiver
+# Inicializar Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate("credenciais.json")
     firebase_admin.initialize_app(cred)
@@ -23,13 +22,13 @@ with st.form("login_form"):
 if botao_login:
     if usuario and senha:
         try:
-            # ⚠️ Use o formato novo com keyword arguments
-            usuarios_ref = db.collection("usuarios").where(filter=("usuario", "==", usuario)).where(filter=("senha", "==", senha)).stream()
-
+            usuarios_ref = db.collection("usuarios").stream()
             usuario_encontrado = None
             for doc in usuarios_ref:
-                usuario_encontrado = doc
-                break
+                dados = doc.to_dict()
+                if dados.get("usuario") == usuario and dados.get("senha") == senha:
+                    usuario_encontrado = doc
+                    break
 
             if usuario_encontrado:
                 st.success("✅ Login realizado com sucesso!")
@@ -37,8 +36,8 @@ if botao_login:
                 st.session_state["id_usuario"] = usuario_encontrado.id
                 st.switch_page("pages/4_Elenco.py")
             else:
-                st.error("❌ Usuário ou senha incorretos. Verifique os dados e tente novamente.")
+                st.error("❌ Usuário ou senha incorretos. Verifique os dados.")
         except Exception as e:
-            st.error(f"Erro ao tentar conectar com o Firebase: {e}")
+            st.error(f"Erro ao acessar o banco de dados: {e}")
     else:
         st.warning("Preencha todos os campos.")

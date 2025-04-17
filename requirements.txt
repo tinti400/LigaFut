@@ -1,4 +1,3 @@
 streamlit
 firebase-admin
-pandas
-streamlit-extras
+google-cloud-firestore
